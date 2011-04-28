@@ -6,13 +6,21 @@
     colors = ["black", "red", "blue", "green", "yellow"];
     color = 0;
     width = 1;
+    canvas = document.getElementById("whiteboard");
+    canvas.width = document.width - 32;
+    canvas.height = document.height - 32;
+    context = canvas.getContext("2d");
     socket = new io.Socket();
     socket.connect();
     socket.on("message", function(obj) {
       var fromX, fromY, toX, toY, _ref;
       switch (obj.msgtype) {
         case "drawing":
-          return draw = obj.value;
+          draw = obj.value;
+          if (draw) {
+            return context.beginPath();
+          }
+          break;
         case "clear":
           return clearContext();
         case "width":
@@ -25,10 +33,6 @@
           return handleDraw(fromX, fromY, toX, toY);
       }
     });
-    canvas = document.getElementById("whiteboard");
-    canvas.width = document.width - 32;
-    canvas.height = document.height - 32;
-    context = canvas.getContext("2d");
     clearContext = function() {
       return context.clearRect(0, 0, canvas.width, canvas.height);
     };
@@ -67,9 +71,6 @@
       }
     };
     drawing = function(value) {
-      if (value) {
-        context.beginPath();
-      }
       return socket.send({
         msgtype: "drawing",
         value: value
@@ -86,6 +87,7 @@
     };
     canvas.onmousedown = function() {
       draw = true;
+      context.beginPath();
       return drawing(draw);
     };
     canvas.onmouseup = function() {

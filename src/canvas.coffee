@@ -7,11 +7,19 @@ window.onload = ->
   # should be replaced with sliders
   width = 1
 
+  canvas = document.getElementById "whiteboard"
+  canvas.width = document.width - 32
+  canvas.height = document.height - 32
+
+  context = canvas.getContext "2d"
+
   socket = new io.Socket()
   socket.connect()
   socket.on "message", (obj) ->  
     switch obj.msgtype
-      when "drawing" then draw = obj.value
+      when "drawing"
+        draw = obj.value
+        if draw then context.beginPath()
       when "clear" then clearContext()
       when "width" then width = obj.value
       when "color"
@@ -20,12 +28,6 @@ window.onload = ->
       when "moving"
         [fromX, fromY, toX, toY] = obj.value
         handleDraw(fromX, fromY, toX, toY)
-
-  canvas = document.getElementById "whiteboard"
-  canvas.width = document.width - 32
-  canvas.height = document.height - 32
-
-  context = canvas.getContext "2d"
 
   clearContext = ->
     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -56,7 +58,6 @@ window.onload = ->
       context.stroke()
 
   drawing = (value) -> 
-    if value then context.beginPath()
     socket.send({msgtype: "drawing", value: value})
 
   canvas.onmousemove = -> 
@@ -66,6 +67,7 @@ window.onload = ->
 
   canvas.onmousedown = ->
     draw = true
+    context.beginPath()
     drawing(draw)
 
   canvas.onmouseup = ->
