@@ -39,3 +39,28 @@ window.onload = ->
   canvas.onmouseup = ->
     draw = false
     drawing(draw)
+
+  cancel = (event) ->
+    if event.preventDefault
+      event.preventDefault()
+    false
+
+  canvas.ondragenter = cancel
+  canvas.ondragover = cancel
+  canvas.ondrop = ->
+    cancel(event)
+    data = event.dataTransfer
+    reader = new FileReader()
+
+    console.log reader
+
+    reader.onloadend = (event) -> 
+      image = new Image()
+      [dX, dY] = [canvas.width / 4, 0]
+      [dW, dH] = [canvas.width / 2, canvas.height]
+      image.onload = ->
+        context.drawImage(image, dX, dY, dW, dH)
+      image.src = event.target.result
+
+    reader.readAsDataURL data.files[0]
+    false
