@@ -3,16 +3,26 @@
   app = require("express").createServer();
   fs = require("fs");
   io = require("socket.io");
-  app.get("/", function(req, res) {
-    return fs.readFile("index.html", function(err, data) {
-      return res.end(data);
-    });
-  });
-  app.get("/canvas.js", function(req, res) {
+  app.get("/:file?.:format?", function(req, res) {
+    var ext, file, format, _ref;
+    _ref = !req.params.file ? ["index", "html"] : [req.params.file, req.params.format], file = _ref[0], ext = _ref[1];
+    format = (function() {
+      switch (ext) {
+        case "js":
+          return "javascript";
+        case "txt":
+          return "text";
+        default:
+          return ext;
+      }
+    })();
     res.writeHead(200, {
-      "content-type": "text/javascript"
+      "content-type": "text/" + format
     });
-    return fs.readFile("canvas.js", function(err, data) {
+    return fs.readFile(file + "." + ext, function(err, data) {
+      if (err) {
+        console.warn(err.message);
+      }
       return res.end(data);
     });
   });
