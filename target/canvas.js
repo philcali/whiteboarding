@@ -1,8 +1,11 @@
 (function() {
   window.onload = function() {
-    var cancel, canvas, context, draw, drawing, handleDraw, socket, x, y, _ref;
+    var cancel, canvas, clearContext, color, colors, context, draw, drawing, handleDraw, socket, width, x, y, _ref;
     _ref = [0, 0], x = _ref[0], y = _ref[1];
     draw = false;
+    colors = ["black", "red", "blue", "green", "yellow"];
+    color = 0;
+    width = 1;
     socket = new io.Socket();
     socket.connect();
     socket.on("message", function(obj) {
@@ -10,6 +13,13 @@
       switch (obj.msgtype) {
         case "drawing":
           return draw = obj.value;
+        case "clear":
+          return clearContext();
+        case "width":
+          return width = obj.value;
+        case "color":
+          color = obj.value;
+          return document.getElementById("canvas-color").style.color = colors[color];
         case "moving":
           _ref = obj.value, fromX = _ref[0], fromY = _ref[1], toX = _ref[2], toY = _ref[3];
           return handleDraw(fromX, fromY, toX, toY);
@@ -19,16 +29,47 @@
     canvas.width = document.width - 32;
     canvas.height = document.height - 32;
     context = canvas.getContext("2d");
+    clearContext = function() {
+      return context.clearRect(0, 0, canvas.width, canvas.height);
+    };
+    document.getElementById("canvas-clear").onclick = function() {
+      socket.send({
+        msgtype: "clear",
+        value: "nothing"
+      });
+      return clearContext();
+    };
+    document.getElementById("canvas-color").onclick = function() {
+      color = color === colors.length - 1 ? 0 : color + 1;
+      socket.send({
+        msgtype: "color",
+        value: color
+      });
+      return this.style.color = colors[color];
+    };
+    document.getElementById("canvas-density").onclick = function() {
+      width = width >= 17 ? 1 : width + 4;
+      return socket.send({
+        msgtype: "width",
+        value: width
+      });
+    };
     handleDraw = function(fX, fY, tX, tY) {
       context.moveTo(fX, fY);
       x = tX;
       y = tY;
       if (draw) {
         context.lineTo(x, y);
+        context.lineCap = "round";
+        context.lineWidth = width;
+        context.strokeStyle = colors[color];
         return context.stroke();
       }
     };
     drawing = function(value) {
+      if (value) {
+        context.beginPath();
+      }
       return socket.send({
         msgtype: "drawing",
         value: value

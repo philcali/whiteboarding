@@ -1,12 +1,22 @@
 window.onload = ->
   [x, y] = [0, 0]  
   draw = false
+  # should be replaced with picker
+  colors = ["black", "red", "blue", "green", "yellow"]
+  color = 0 
+  # should be replaced with sliders
+  width = 1
 
   socket = new io.Socket()
   socket.connect()
   socket.on "message", (obj) ->  
     switch obj.msgtype
       when "drawing" then draw = obj.value
+      when "clear" then clearContext()
+      when "width" then width = obj.value
+      when "color"
+        color = obj.value
+        document.getElementById("canvas-color").style.color = colors[color]
       when "moving"
         [fromX, fromY, toX, toY] = obj.value
         handleDraw(fromX, fromY, toX, toY)
@@ -17,15 +27,37 @@ window.onload = ->
 
   context = canvas.getContext "2d"
 
+  clearContext = ->
+    context.clearRect(0, 0, canvas.width, canvas.height)
+
+  # Controls
+  document.getElementById("canvas-clear").onclick = ->
+    socket.send({msgtype: "clear", value: "nothing"})
+    clearContext()
+
+  document.getElementById("canvas-color").onclick = ->
+    color = if color == colors.length - 1 then 0 else color + 1
+    socket.send({msgtype: "color", value: color})
+    this.style.color = colors[color]
+
+  document.getElementById("canvas-density").onclick = ->
+    width = if width >= 17 then 1 else width + 4
+    socket.send({msgtype: "width", value: width})
+
   handleDraw = (fX, fY, tX, tY)->
     context.moveTo fX, fY
     x = tX
     y = tY
     if draw
       context.lineTo x, y
+      context.lineCap = "round"
+      context.lineWidth = width
+      context.strokeStyle = colors[color]
       context.stroke()
 
-  drawing = (value) -> socket.send({msgtype: "drawing", value: value})
+  drawing = (value) -> 
+    if value then context.beginPath()
+    socket.send({msgtype: "drawing", value: value})
 
   canvas.onmousemove = -> 
     [toX, toY] = [event.clientX - 9, event.clientY - 8]
@@ -45,6 +77,7 @@ window.onload = ->
       event.preventDefault()
     false
 
+  # Cancel Browser Events
   canvas.ondragenter = cancel
   canvas.ondragover = cancel
   canvas.ondrop = ->
