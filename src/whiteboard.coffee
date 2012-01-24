@@ -22,8 +22,8 @@ app.get "/:file?.:format?", (req, res) ->
 app.listen 8000
 
 socket = io.listen app
-socket.on "connection", (c) ->
+socket.sockets.on "connection", (c) ->
   console.log "Received a connection"
 
   c.on "message", (obj) ->
-    c.broadcast obj
+    c.broadcast.emit "message", obj

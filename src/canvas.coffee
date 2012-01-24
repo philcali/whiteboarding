@@ -1,9 +1,9 @@
 window.onload = ->
-  [x, y] = [0, 0]  
+  [x, y] = [0, 0]
   draw = false
   # should be replaced with picker
   colors = ["black", "red", "blue", "green", "yellow"]
-  color = 0 
+  color = 0
   # should be replaced with sliders
   width = 1
 
@@ -13,9 +13,8 @@ window.onload = ->
 
   context = canvas.getContext "2d"
 
-  socket = new io.Socket()
-  socket.connect()
-  socket.on "message", (obj) ->  
+  socket = io.connect()
+  socket.on "message", (obj) ->
     switch obj.msgtype
       when "drawing"
         draw = obj.value
@@ -34,17 +33,17 @@ window.onload = ->
 
   # Controls
   document.getElementById("canvas-clear").onclick = ->
-    socket.send({msgtype: "clear", value: "nothing"})
+    socket.emit("message", {msgtype: "clear", value: "nothing"})
     clearContext()
 
   document.getElementById("canvas-color").onclick = ->
     color = if color == colors.length - 1 then 0 else color + 1
-    socket.send({msgtype: "color", value: color})
+    socket.emit("message", {msgtype: "color", value: color})
     this.style.color = colors[color]
 
   document.getElementById("canvas-density").onclick = ->
     width = if width >= 17 then 1 else width + 4
-    socket.send({msgtype: "width", value: width})
+    socket.emit("message", {msgtype: "width", value: width})
 
   handleDraw = (fX, fY, tX, tY)->
     context.moveTo fX, fY
@@ -57,12 +56,12 @@ window.onload = ->
       context.strokeStyle = colors[color]
       context.stroke()
 
-  drawing = (value) -> 
-    socket.send({msgtype: "drawing", value: value})
+  drawing = (value) ->
+    socket.emit("message", {msgtype: "drawing", value: value})
 
-  canvas.onmousemove = -> 
+  canvas.onmousemove = ->
     [toX, toY] = [event.clientX - 9, event.clientY - 8]
-    socket.send({msgtype: "moving", value: [x, y, toX, toY]})
+    socket.emit("message", {msgtype: "moving", value: [x, y, toX, toY]})
     handleDraw(x, y, toX, toY)
 
   canvas.onmousedown = ->
@@ -89,7 +88,7 @@ window.onload = ->
 
     console.log reader
 
-    reader.onloadend = (event) -> 
+    reader.onloadend = (event) ->
       image = new Image()
       [dX, dY] = [canvas.width / 4, 0]
       [dW, dH] = [canvas.width / 2, canvas.height]
