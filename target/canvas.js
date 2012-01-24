@@ -1,4 +1,5 @@
 (function() {
+
   window.onload = function() {
     var cancel, canvas, clearContext, color, colors, context, draw, drawing, handleDraw, socket, width, x, y, _ref;
     _ref = [0, 0], x = _ref[0], y = _ref[1];
@@ -10,16 +11,13 @@
     canvas.width = document.width - 32;
     canvas.height = document.height - 32;
     context = canvas.getContext("2d");
-    socket = new io.Socket();
-    socket.connect();
+    socket = io.connect();
     socket.on("message", function(obj) {
-      var fromX, fromY, toX, toY, _ref;
+      var fromX, fromY, toX, toY, _ref2;
       switch (obj.msgtype) {
         case "drawing":
           draw = obj.value;
-          if (draw) {
-            return context.beginPath();
-          }
+          if (draw) return context.beginPath();
           break;
         case "clear":
           return clearContext();
@@ -29,7 +27,7 @@
           color = obj.value;
           return document.getElementById("canvas-color").style.color = colors[color];
         case "moving":
-          _ref = obj.value, fromX = _ref[0], fromY = _ref[1], toX = _ref[2], toY = _ref[3];
+          _ref2 = obj.value, fromX = _ref2[0], fromY = _ref2[1], toX = _ref2[2], toY = _ref2[3];
           return handleDraw(fromX, fromY, toX, toY);
       }
     });
@@ -37,7 +35,7 @@
       return context.clearRect(0, 0, canvas.width, canvas.height);
     };
     document.getElementById("canvas-clear").onclick = function() {
-      socket.send({
+      socket.emit("message", {
         msgtype: "clear",
         value: "nothing"
       });
@@ -45,7 +43,7 @@
     };
     document.getElementById("canvas-color").onclick = function() {
       color = color === colors.length - 1 ? 0 : color + 1;
-      socket.send({
+      socket.emit("message", {
         msgtype: "color",
         value: color
       });
@@ -53,7 +51,7 @@
     };
     document.getElementById("canvas-density").onclick = function() {
       width = width >= 17 ? 1 : width + 4;
-      return socket.send({
+      return socket.emit("message", {
         msgtype: "width",
         value: width
       });
@@ -71,15 +69,15 @@
       }
     };
     drawing = function(value) {
-      return socket.send({
+      return socket.emit("message", {
         msgtype: "drawing",
         value: value
       });
     };
     canvas.onmousemove = function() {
-      var toX, toY, _ref;
-      _ref = [event.clientX - 9, event.clientY - 8], toX = _ref[0], toY = _ref[1];
-      socket.send({
+      var toX, toY, _ref2;
+      _ref2 = [event.clientX - 9, event.clientY - 8], toX = _ref2[0], toY = _ref2[1];
+      socket.emit("message", {
         msgtype: "moving",
         value: [x, y, toX, toY]
       });
@@ -95,9 +93,7 @@
       return drawing(draw);
     };
     cancel = function(event) {
-      if (event.preventDefault) {
-        event.preventDefault();
-      }
+      if (event.preventDefault) event.preventDefault();
       return false;
     };
     canvas.ondragenter = cancel;
@@ -109,10 +105,10 @@
       reader = new FileReader();
       console.log(reader);
       reader.onloadend = function(event) {
-        var dH, dW, dX, dY, image, _ref, _ref2;
+        var dH, dW, dX, dY, image, _ref2, _ref3;
         image = new Image();
-        _ref = [canvas.width / 4, 0], dX = _ref[0], dY = _ref[1];
-        _ref2 = [canvas.width / 2, canvas.height], dW = _ref2[0], dH = _ref2[1];
+        _ref2 = [canvas.width / 4, 0], dX = _ref2[0], dY = _ref2[1];
+        _ref3 = [canvas.width / 2, canvas.height], dW = _ref3[0], dH = _ref3[1];
         image.onload = function() {
           return context.drawImage(image, dX, dY, dW, dH);
         };
@@ -122,4 +118,5 @@
       return false;
     };
   };
+
 }).call(this);

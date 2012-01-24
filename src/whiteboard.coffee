@@ -1,23 +1,11 @@
-app = require("express").createServer()
+express = require "express"
+app = express.createServer()
+
 fs = require "fs"
 io = require "socket.io"
 
-app.get "/:file?.:format?", (req, res) ->
-  [file, ext] = if not req.params.file 
-    ["index", "html"] 
-  else 
-    [req.params.file, req.params.format]
-
-  format = switch ext 
-    when "js" then "javascript"
-    when "txt" then "text"
-    else ext
-
-  res.writeHead 200, 
-    "content-type": "text/" + format
-  fs.readFile file + "." + ext, (err, data) ->
-    if err then console.warn err.message
-    res.end data
+app.configure "development", ->
+  app.use express.static __dirname + "/../target"
 
 app.listen 8000
 
