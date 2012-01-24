@@ -1,9 +1,11 @@
 window.onload = ->
   [x, y] = [0, 0]
   draw = false
+
   # should be replaced with picker
   colors = ["black", "red", "blue", "green", "yellow"]
   color = 0
+
   # should be replaced with sliders
   width = 1
 
